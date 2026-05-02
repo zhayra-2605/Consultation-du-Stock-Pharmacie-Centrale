@@ -1,0 +1,693 @@
+/* 
+   v4: Creative Biotech / Health-Tech Startup Theme 
+   Concept: Organic Tech & Liquid Glass
+*/
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:root {
+  /* Biotech Color Palette */
+  --bio-green-neon: #00ff88;
+  --bio-green-primary: #00A859;
+  --bio-green-dark: #004d29;
+  
+  --bio-lime-light: #ecfdf5; /* Replaced cyan-light */
+  --bio-lime-deep: #1db954; /* Replaced cyan-deep */
+  
+  --glass-white: rgba(255, 255, 255, 0.75);
+  --glass-white-hover: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  
+  /* Typography */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  
+  /* Advanced Shadows & Geometry */
+  --shadow-glass: 0 8px 32px 0 rgba(0, 168, 89, 0.15);
+  --shadow-glow: 0 0 20px rgba(0, 255, 136, 0.4);
+  
+  --transition-fluid: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --radius-pill: 999px;
+  --radius-glass-card: 20px;
+  --danger-red: #e11d48;
+}
+
+/* Organic Mesh Background Animation */
+@keyframes meshGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  
+  /* Complex Biotech Mesh Gradient Background (100% Green/Mint Spectrum) */
+  background: linear-gradient(-45deg, #e6f7ef, #d1fae5, #f4fdf8, #a7f3d0);
+  background-size: 400% 400%;
+  animation: meshGradient 15s ease infinite;
+  
+  color: var(--text-primary);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden; /* Prevent body scroll, use app-container */
+}
+
+/* Add a macroscopic "cell" repeating pattern overlay */
+body::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: radial-gradient(var(--bio-green-primary) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Layout */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-layout {
+  display: flex;
+  flex: 1;
+  padding: 12px 16px; /* Réduction du padding pour gagner de l'espace en largeur */
+  gap: 24px;         /* Légère réduction de l'espacement entre la sidebar et le contenu principal */
+  overflow: hidden;
+  max-width: 100%;
+  margin: 0;         /* Suppression de la marge auto pour forcer l'occupation totale */
+  width: 100%;       /* Utilisation de 100% au lieu de 100vw pour éviter l'overflow si scrollbar */
+}
+
+.main-content {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: auto; /* Permet le défilement horizontal interne si le tableau est trop large */
+  /* Hide scrollbar for cleaner glass look */
+  scrollbar-width: thin;
+  scrollbar-color: var(--bio-green-primary) transparent;
+}
+
+/* Glass Header */
+.app-header {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 16px 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+  z-index: 10;
+}
+
+.app-header-logo {
+  height: 55px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 10px rgba(0,168,89,0.15));
+  transition: var(--transition-fluid);
+}
+
+.app-header-logo:hover {
+  transform: scale(1.05);
+}
+
+.app-header-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.app-header-title span {
+  background: linear-gradient(135deg, var(--bio-green-primary), var(--bio-lime-deep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Frosted Glass Sidebar */
+.sidebar-container {
+  width: 300px;
+  background: var(--glass-white);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius-glass-card);
+  display: flex;
+  flex-direction: column;
+  padding: 28px;
+  box-shadow: var(--shadow-glass);
+  border: 1px solid var(--glass-border);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle glowing accent inside sidebar */
+.sidebar-container::after {
+  content: '';
+  position: absolute;
+  top: -50px; right: -50px;
+  width: 150px; height: 150px;
+  background: var(--bio-green-neon);
+  filter: blur(60px);
+  opacity: 0.15;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.sidebar-title {
+  color: var(--bio-green-dark); /* Replaced cyan */
+  font-weight: 800;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sidebar-title::before {
+  content: '⚕️';
+  font-size: 1.3rem;
+  filter: drop-shadow(0 2px 4px rgba(0,168,89,0.3)); /* Replaced cyan shadow */
+}
+
+/* High-End Pill Buttons */
+.depot-btn {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 16px;
+  padding: 14px 24px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--glass-border);
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: var(--transition-fluid);
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.depot-btn::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--text-muted);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.depot-btn:hover {
+  transform: translateY(-2px);
+  background: var(--glass-white-hover);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+
+/* Active / State Variants */
+.depot-btn.success {
+  background: linear-gradient(135deg, var(--bio-green-primary), #00d270);
+  color: white;
+  border-color: transparent;
+  box-shadow: var(--shadow-glow);
+}
+.depot-btn.success::before {
+  background-color: var(--bio-green-neon);
+  box-shadow: 0 0 8px var(--bio-green-neon);
+}
+.depot-btn.success:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 25px rgba(0, 255, 136, 0.5);
+}
+
+.depot-btn.danger {
+  background: linear-gradient(135deg, var(--danger-red), #ff4d6d);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 0 20px rgba(225, 29, 72, 0.3);
+}
+.depot-btn.danger::before {
+  background-color: #ffd166;
+  box-shadow: 0 0 8px #ffd166;
+}
+
+/* Footer Buttons */
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-btn {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-glass-card);
+  padding: 12px 20px;
+  text-align: left;
+  color: var(--text-primary);
+  font-weight: 700;
+  transition: var(--transition-fluid);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.footer-btn:hover {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  transform: translateY(-2px);
+}
+.footer-btn span {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+/* Search Card (Microscope Lens Concept) */
+.search-card {
+  background: var(--glass-white);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius-glass-card);
+  padding: 20px 30px;
+  margin-bottom: 20px;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+}
+
+.search-label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+  color: var(--bio-green-dark); /* Replaced cyan */
+}
+
+.form-control, .form-select {
+  border-radius: var(--radius-pill);
+  border: 2px solid rgba(255,255,255,0.8);
+  padding: 14px 28px;
+  transition: var(--transition-fluid);
+  font-size: 1rem;
+  background-color: rgba(255, 255, 255, 0.4);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--bio-green-neon);
+  background-color: white;
+  box-shadow: 0 0 0 4px rgba(0, 255, 136, 0.2);
+  outline: none;
+}
+
+.btn-search {
+  background: linear-gradient(135deg, var(--bio-green-primary), var(--bio-lime-deep));
+  color: white;
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  padding: 14px 32px;
+  border: none;
+  transition: var(--transition-fluid);
+  box-shadow: 0 8px 20px rgba(29, 185, 84, 0.3); /* Replaced cyan shadow */
+}
+.btn-search:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(29, 185, 84, 0.4);
+  background: linear-gradient(135deg, var(--bio-lime-deep), var(--bio-green-primary));
+}
+
+/* Glass Tables - Floating Plates */
+.table-custom-wrapper {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.table-title {
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  font-weight: 800;
+  background: transparent;
+  padding: 0 0 12px 8px;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.table-title span {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.table-custom {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px; /* Detached floating rows, reduced space */
+}
+
+.table-custom thead th {
+  background: transparent !important;
+  color: var(--text-secondary);
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 12px 4px 12px;
+  border: none;
+}
+
+.table-custom tbody tr {
+  background: var(--glass-white);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: var(--transition-fluid);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+/* Round the corners of the detached rows */
+.table-custom tbody tr td:first-child { border-radius: 16px 0 0 16px; border-left: 1px solid var(--glass-border); }
+.table-custom tbody tr td:last-child { border-radius: 0 16px 16px 0; border-right: 1px solid var(--glass-border); }
+.table-custom tbody tr td { 
+  border-top: 1px solid var(--glass-border); 
+  border-bottom: 1px solid var(--glass-border);
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.table-custom tbody tr:hover {
+  transform: translateY(-3px) scale(1.005);
+  box-shadow: var(--shadow-glass);
+  background: rgba(255,255,255,0.9);
+  cursor: pointer;
+}
+
+/* Selected Plate (Neon Highlight) */
+.table-row-selected {
+  background: linear-gradient(90deg, var(--bio-green-primary), #059669) !important;
+  box-shadow: var(--shadow-glow) !important;
+}
+.table-row-selected td {
+  color: white !important;
+  font-weight: 700;
+  border-color: transparent !important;
+}
+.table-row-selected td[style*="color"] {
+  color: var(--bio-green-neon) !important; /* Override inline colors for selected row */
+}
+
+/* Info Strip - DNA Sequencing Look */
+.info-strip {
+  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  padding: 10px 20px;
+  border-radius: var(--radius-glass-card);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-glass);
+  position: relative;
+  overflow: hidden;
+}
+
+.info-strip::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 8px;
+  background: linear-gradient(to bottom, var(--bio-lime-deep), var(--bio-green-neon));
+}
+
+.info-strip div {
+  text-align: center;
+}
+
+.info-strip strong {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--bio-green-dark); /* Replaced cyan */
+  margin-bottom: 8px;
+}
+
+/* Modal - Lab Clean Room Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(12px); }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.95) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.modal-content-custom {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.15), 0 0 40px rgba(0, 255, 136, 0.1);
+  width: 1400px;
+  max-width: 96%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-header-custom {
+  background: transparent;
+  padding: 32px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.modal-header-custom h4 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.modal-header-custom h4::before {
+  content: '⚕️';
+  font-size: 1.8rem;
+  filter: drop-shadow(0 2px 4px rgba(0,168,89,0.3));
+}
+
+.btn-close-custom {
+  background: rgba(255,255,255,0.5);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-fluid);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.btn-close-custom:hover {
+  background: var(--danger-red);
+  color: white;
+  border-color: transparent;
+  transform: rotate(90deg);
+  box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4);
+}
+
+.modal-body-custom {
+  padding: 40px;
+  overflow-y: auto;
+}
+
+/* Stats wrapper specific override to match the new floating glass look */
+.stats-container .table-custom-wrapper {
+  background: var(--glass-white);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius-glass-card);
+  padding: 16px;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  margin-bottom: 0;
+}
+.stats-container .table-title {
+  padding: 0 0 16px 0;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 16px;
+}
+
+/* --- Sliding Right Sidebar (Glassmorphism Hover Panel) --- */
+.right-sidebar-wrapper {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  /* Extra wide invisible padding on the left to catch mouse early */
+  padding-left: 60px;
+  /* Push it exactly off screen on the right. 340px width + padding */
+  transform: translateX(calc(100% - 30px)); 
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1040;
+}
+
+/* The small strip sticking out to hint the user */
+.right-sidebar-handle {
+  width: 30px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bio-green-primary);
+  font-size: 0.8rem;
+  box-shadow: -4px 0 15px rgba(0,0,0,0.05);
+  cursor: pointer;
+}
+
+.right-sidebar-wrapper:hover,
+.right-sidebar-wrapper:focus-within {
+  transform: translateX(0); /* Slide completely in */
+}
+
+/* Ensure the panel itself looks like a floating glass plate */
+.right-sidebar-panel {
+  border-radius: 0;
+  border-right: none;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+  height: 100vh !important;
+  border-top: none;
+  border-bottom: none;
+}
+
+/* --- Global Action Buttons (Reset, Exec, Excel, PDF) --- */
+.btn-action-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  backdrop-filter: blur(8px);
+}
+
+.btn-action-base:hover {
+  transform: translateY(-2px);
+}
+
+.btn-action-base:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-reset-global {
+  background: rgba(226, 232, 240, 0.6);
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+.btn-reset-global:hover {
+  background: rgba(203, 213, 225, 0.8);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  color: #1e293b;
+}
+
+.btn-exec-global {
+  background: linear-gradient(135deg, #4f46e5, #3730a3);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+}
+.btn-exec-global:hover {
+  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.5);
+  background: linear-gradient(135deg, #4338ca, #312e81);
+}
+
+.btn-excel-global {
+  background: linear-gradient(135deg, #107c41, #0c6133);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(16, 124, 65, 0.3);
+}
+.btn-excel-global:hover {
+  box-shadow: 0 8px 25px rgba(16, 124, 65, 0.4);
+  background: linear-gradient(135deg, #0f6c3a, #094725);
+}
+
+.btn-pdf-global {
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+}
+.btn-pdf-global:hover {
+  box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+  background: linear-gradient(135deg, #b91c1c, #7f1d1d);
+}

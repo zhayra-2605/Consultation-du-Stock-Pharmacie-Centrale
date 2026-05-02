@@ -1,0 +1,14 @@
+# pyrefly.toml — Configuration du linter Pyrefly
+# Pointe vers l'interpréteur Python avec les packages installés
+
+python_interpreter = "C:/Users/fatma/AppData/Local/Programs/Python/Python313/python.exe"
+
+search_path = [
+  "C:/Users/fatma/AppData/Local/Programs/Python/Python313/Lib/site-packages",
+  "C:/wamp64/www/Pharmacie Centrale/.venv/Lib/site-packages",
+  "C:/wamp64/www/Pharmacie Centrale/pharmacie_ml_engine"
+]
+
+# Désactiver le type-checking strict (on veut juste les erreurs critiques)
+[errors]
+missing-module-attribute = false

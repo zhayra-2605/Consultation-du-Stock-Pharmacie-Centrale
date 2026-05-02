@@ -1,0 +1,196 @@
+module.exports = {
+  // Pre-load transformations
+  addIndexes: [
+    `CREATE INDEX idx_tp_cp ON table_produit(CODE_PRODUIT)`,
+    `CREATE INDEX idx_hm_cp ON historique_mouvement(CODE_PRODUIT)`,
+    `CREATE INDEX idx_cs_cp ON consulter_stock(CODE_PRODUIT)`
+  ],
+
+  populateCodeBesoin: {
+    // Note: Column existence check is handled in index.js or via stored procedure logic
+    addColumn: `
+      SET @dbname = DATABASE();
+      SET @tablename = 'historique_mouvement';
+      SET @columnname = 'CODE_BESOIN';
+      SET @preparedStatement = (SELECT IF(
+        (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = @tablename AND COLUMN_NAME = @columnname) > 0,
+        'SELECT 1',
+        'ALTER TABLE historique_mouvement ADD COLUMN CODE_BESOIN VARCHAR(255)'
+      ));
+      PREPARE stmt FROM @preparedStatement;
+      EXECUTE stmt;
+      DEALLOCATE PREPARE stmt;
+    `,
+    update: `
+      UPDATE historique_mouvement hm
+      LEFT JOIN consulter_stock cs ON hm.CODE_PRODUIT = cs.CODE_PRODUIT
+      LEFT JOIN table_produit tp ON hm.CODE_PRODUIT = tp.CODE_PRODUIT
+      SET hm.CODE_BESOIN = COALESCE(cs.CODE_BESOIN, tp.CODEBESOIN, '0-0000');
+    `,
+    index: `CREATE INDEX IF NOT EXISTS idx_hm_cb ON historique_mouvement(CODE_BESOIN)`
+  },
+
+  createRefRegions: {
+    drop: `DROP TABLE IF EXISTS ref_regions`,
+    create: `
+      CREATE TABLE ref_regions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        label VARCHAR(255),
+        db_key VARCHAR(255),
+        stk_fields TEXT,
+        vte_fields TEXT,
+        depot_names TEXT,
+        weight FLOAT
+      )
+    `,
+    insert: `
+      INSERT INTO ref_regions (label, db_key, stk_fields, vte_fields, depot_names, weight) VALUES
+      ('Tunis', 'TUNIS', 'STKFERME,STKCOMPT,STKSERUM,STKVACCIN,STKDIST,STKTUDIPH,STKCHIMIE,STKHOMEO,STKVET,STKDENT', 'VTEFERME,VTECOMPT,VTESERUM,VTEVACCIN,VTEDIST,VTETUDIPH,VTECHIMIE,VTEHOMEO,VTEVET,VTEDENT', 'COMMANDE FERME,COMPTOIR,DEPOT SERUM,DEPOT VACCINS,DISTRIPHAR,TUDIPHARMA,CHIMIE,HOMEO,VET,DENTAIRE', 0.30),
+      ('Sfax', 'SFAX', 'STKCEPHOP,STKCEPOF', 'VTECEPHOP,VTECEPOF', 'CEPHARMA HOPITAUX SFAX,CEPHARMA PUBLIC - SFAX -', 0.20),
+      ('Sousse', 'SOUSSE', 'STKSODHOP,STKSODOF', 'VTESODHOP,VTESODOF', 'SODIPHAC HOPITAUX SOUSSE,SODIPHAC PUBLIC - SOUSSE -', 0.15),
+      ('Gafsa', 'GAFSA', 'STKGAFSA', 'VTEGAFSA', 'DEPOT GAFSA,GAFSA CLINIQUE', 0.10),
+      ('Kef', 'KEF', 'STKKEF', 'VTEKEF', 'DEPOT LE KEF,KEF CLINIQUE', 0.05),
+      ('Medenine', 'MEDENINE', 'STKMEDENINE', 'VTEMEDENINE', 'DEPOT MEDENINE', 0.10),
+      ('Réserve', 'RÉSERVE', 'STKRESHOP,STKRESOF', 'VTERESHOP,VTERESOF', 'RESERVE HOPITAUX,RESERVE OFFICINES', 0.10)
+    `
+  },
+
+  createProduitMouvement: {
+    drop: `DROP TABLE IF EXISTS produits_mouvements`,
+    create: `
+      CREATE TABLE produits_mouvements AS
+      SELECT 
+          hm.CODE_PRODUIT AS code,
+          hm.CODE_BESOIN,
+          COALESCE(tp.LIBELLE_PRODUIT, cs.LIBELLE_PRODUIT, 'SANS LIBELLE') AS produit,
+          hm.ANNEE,
+          hm.MOIS,
+          hm.DATEMVT AS date_mvt,
+          hm.VENTE_TOTAL AS quantite,
+          hm.STOCK_TOTAL
+      FROM historique_mouvement hm
+      LEFT JOIN table_produit tp ON hm.CODE_PRODUIT = tp.CODE_PRODUIT
+      LEFT JOIN consulter_stock cs ON hm.CODE_PRODUIT = cs.CODE_PRODUIT;
+    `
+  },
+
+  createStarSchema: {
+    cleanup: [
+      `DROP VIEW IF EXISTS dim_produit`,
+      `DROP VIEW IF EXISTS dim_besoin`,
+      `DROP VIEW IF EXISTS fact_mouvements`
+    ],
+    dimProduit: {
+      drop: `DROP TABLE IF EXISTS dim_produit`,
+      create: `
+        CREATE TABLE dim_produit AS
+        SELECT 
+            cs.CODE_PRODUIT,
+            cs.LIBELLE_PRODUIT AS LIBELLE,
+            COALESCE(cs.CODE_BESOIN, tp.CODEBESOIN) AS CODE_BESOIN,
+            cs.LIBELLE_BESOIN,
+            cs.NOM_FOURNISSEUR,
+            cs.NOM_PAYS,
+            COALESCE(tp.PRESENTATION, cs.PRESENTATION_T) AS PRESENTATION,
+            tp.PRESENTATIONNB,
+            cs.INTERCHANGEABLE,
+            tp.FORME,
+            tp.DOSAGE1 as DOSAGE,
+            tp.CLASSE,
+            COALESCE(tp.SIGLE, dpd.SIGLE) AS SIGLE,
+            dpd.VEIC,
+            dpd.QUARANTAINE,
+            dpd.QTE_BLOQUEE,
+            COALESCE(dpd.ETATPRODUIT, tp.ETAT) AS ETATPRODUIT
+        FROM consulter_stock cs
+        LEFT JOIN table_produit tp ON cs.CODE_PRODUIT = tp.CODE_PRODUIT
+        LEFT JOIN details_produit dpd ON cs.CODE_PRODUIT = dpd.CODEPRODUIT;
+      `,
+      index: `CREATE INDEX idx_dim_prod_cp ON dim_produit(CODE_PRODUIT)`
+    },
+    dimBesoin: {
+      drop: `DROP TABLE IF EXISTS dim_besoin`,
+      create: `
+        CREATE TABLE dim_besoin AS
+        SELECT 
+            CODE_BESOIN,
+            LIBELLE,
+            CATEGORIE,
+            FORME,
+            VILLE,
+            PRESENTATIONNB AS PRESENTATIONTYPE
+        FROM pcodebesoin;
+      `,
+      index: `CREATE INDEX idx_dim_bes_cb ON dim_besoin(CODE_BESOIN)`
+    },
+    factMouvements: {
+      drop: `DROP TABLE IF EXISTS fact_mouvements`,
+      create: `CREATE TABLE fact_mouvements AS SELECT * FROM historique_mouvement;`,
+      indexes: [
+        `CREATE INDEX idx_fact_hm_cp ON fact_mouvements(CODE_PRODUIT)`,
+        `CREATE INDEX idx_fact_hm_cb ON fact_mouvements(CODE_BESOIN)`
+      ]
+    }
+  },
+
+  createAnalyticsTables: `
+    DROP TABLE IF EXISTS stock_region_besoin;
+    CREATE TABLE stock_region_besoin AS
+    SELECT ANNEE, MOIS, CODE_BESOIN, 'TUNIS' as REGION, 
+    SUM(COALESCE(STKTUDIPH,0)+COALESCE(STKCHIMIE,0)+COALESCE(STKDIST,0)+COALESCE(STKCOMPT,0)+COALESCE(STKFERME,0)+COALESCE(STKSERUM,0)+COALESCE(STKVACCIN,0)+COALESCE(STKHOMEO,0)+COALESCE(STKVET,0)+COALESCE(STKDENT,0)) as STOCK_REGION,
+    SUM(COALESCE(VTETUDIPH,0)+COALESCE(VTECHIMIE,0)+COALESCE(VTEDIST,0)+COALESCE(VTECOMPT,0)+COALESCE(VTEFERME,0)+COALESCE(VTESERUM,0)+COALESCE(VTEVACCIN,0)+COALESCE(VTEHOMEO,0)+COALESCE(VTEVET,0)+COALESCE(VTEDENT,0)) as VENTE_REGION
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_BESOIN
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_BESOIN, 'SFAX' as REGION, SUM(COALESCE(STKCEPHOP,0)+COALESCE(STKCEPOF,0)), SUM(COALESCE(VTECEPHOP,0)+COALESCE(VTECEPOF,0))
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_BESOIN
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_BESOIN, 'SOUSSE' as REGION, SUM(COALESCE(STKSODHOP,0)+COALESCE(STKSODOF,0)), SUM(COALESCE(VTESODHOP,0)+COALESCE(VTESODOF,0))
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_BESOIN
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_BESOIN, 'GAFSA' as REGION, SUM(COALESCE(STKGAFSA,0)), SUM(COALESCE(VTEGAFSA,0))
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_BESOIN
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_BESOIN, 'KEF' as REGION, SUM(COALESCE(STKKEF,0)), SUM(COALESCE(VTEKEF,0))
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_BESOIN
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_BESOIN, 'MEDENINE' as REGION, SUM(COALESCE(STKMEDENINE,0)), SUM(COALESCE(VTEMEDENINE,0))
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_BESOIN
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_BESOIN, 'RÉSERVE' as REGION, SUM(COALESCE(STKRESHOP,0)+COALESCE(STKRESOF,0)), SUM(COALESCE(VTERESHOP,0)+COALESCE(VTERESOF,0))
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_BESOIN
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_BESOIN, 'NATIONAL' as REGION, SUM(STOCK_TOTAL), SUM(VENTE_TOTAL)
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_BESOIN;
+
+    DROP TABLE IF EXISTS stock_region_produit;
+    CREATE TABLE stock_region_produit AS
+    SELECT ANNEE, MOIS, CODE_PRODUIT, 'TUNIS' as REGION, 
+    SUM(COALESCE(STKTUDIPH,0)+COALESCE(STKCHIMIE,0)+COALESCE(STKDIST,0)+COALESCE(STKCOMPT,0)+COALESCE(STKFERME,0)+COALESCE(STKSERUM,0)+COALESCE(STKVACCIN,0)+COALESCE(STKHOMEO,0)+COALESCE(STKVET,0)+COALESCE(STKDENT,0)) as STOCK_REGION,
+    SUM(COALESCE(VTETUDIPH,0)+COALESCE(VTECHIMIE,0)+COALESCE(VTEDIST,0)+COALESCE(VTECOMPT,0)+COALESCE(VTEFERME,0)+COALESCE(VTESERUM,0)+COALESCE(VTEVACCIN,0)+COALESCE(VTEHOMEO,0)+COALESCE(VTEVET,0)+COALESCE(VTEDENT,0)) as VENTE_REGION
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_PRODUIT
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_PRODUIT, 'SFAX' as REGION, SUM(COALESCE(STKCEPHOP,0)+COALESCE(STKCEPOF,0)), SUM(COALESCE(VTECEPHOP,0)+COALESCE(VTECEPOF,0))
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_PRODUIT
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_PRODUIT, 'SOUSSE' as REGION, SUM(COALESCE(STKSODHOP,0)+COALESCE(STKSODOF,0)), SUM(COALESCE(VTESODHOP,0)+COALESCE(VTESODOF,0))
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_PRODUIT
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_PRODUIT, 'GAFSA' as REGION, SUM(COALESCE(STKGAFSA,0)), SUM(COALESCE(VTEGAFSA,0))
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_PRODUIT
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_PRODUIT, 'KEF' as REGION, SUM(COALESCE(STKKEF,0)), SUM(COALESCE(VTEKEF,0))
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_PRODUIT
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_PRODUIT, 'MEDENINE' as REGION, SUM(COALESCE(STKMEDENINE,0)), SUM(COALESCE(VTEMEDENINE,0))
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_PRODUIT
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_PRODUIT, 'RÉSERVE' as REGION, SUM(COALESCE(STKRESHOP,0)+COALESCE(STKRESOF,0)), SUM(COALESCE(VTERESHOP,0)+COALESCE(VTERESOF,0))
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_PRODUIT
+    UNION ALL
+    SELECT ANNEE, MOIS, CODE_PRODUIT, 'NATIONAL' as REGION, SUM(STOCK_TOTAL), SUM(VENTE_TOTAL)
+    FROM fact_mouvements GROUP BY ANNEE, MOIS, CODE_PRODUIT;
+
+    CREATE INDEX idx_srp_cp ON stock_region_produit(CODE_PRODUIT);
+    CREATE INDEX idx_srb_cb ON stock_region_besoin(CODE_BESOIN);
+  `
+};
