@@ -9,6 +9,7 @@ import CoverageBadge from './CoverageBadge';
 
 /* ─── component ─────────────────────────────────────────────────────────── */
 const CompareRegionsModal = ({ isOpen, onClose, selectedProduct, isBesoinSearch }) => {
+    const userRole = sessionStorage.getItem('role');
     const [region1, setRegion1] = useState('Tunis');
     const [region2, setRegion2] = useState('Medenine');
     const [historyMonths, setHistoryMonths] = useState(6);
@@ -268,27 +269,30 @@ const CompareRegionsModal = ({ isOpen, onClose, selectedProduct, isBesoinSearch 
                                     </div>
 
                                     {/* Bouton Print */}
-                                    {results.length > 0 && (
-                                        <button 
-                                            className="btn-action-base" 
-                                            onClick={() => generateComparisonReport(results, selectedProduct, region1, region2)}
-                                            style={{ 
-                                                padding: '8px 16px', 
-                                                borderRadius: '10px', 
-                                                fontSize: '0.75rem', 
-                                                fontWeight: '700',
-                                                background: 'white',
-                                                border: '1px solid var(--glass-border)',
-                                                color: 'var(--text-secondary)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '6px',
-                                                boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
-                                            }}
-                                        >
-                                            <i className="fas fa-print"></i> Imprimer
-                                        </button>
-                                    )}
+                                    <div className="d-flex gap-2 ms-auto">
+                                        {userRole !== 'VIEWER' && results.length > 0 && (
+                                            <button 
+                                                className="btn-action-base btn-print-global"
+                                                title="Imprimer cette comparaison"
+                                                onClick={() => window.print()}
+                                                style={{ 
+                                                    padding: '8px 16px', 
+                                                    borderRadius: '10px', 
+                                                    fontSize: '0.75rem', 
+                                                    fontWeight: '700',
+                                                    background: 'white',
+                                                    border: '1px solid var(--glass-border)',
+                                                    color: 'var(--text-secondary)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
+                                                }}
+                                            >
+                                                <i className="fas fa-print"></i> Imprimer
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -398,22 +402,32 @@ const CompareRegionsModal = ({ isOpen, onClose, selectedProduct, isBesoinSearch 
 
                             {/* ── Footer ── */}
                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '12px' }}>
-                                 <button 
-                                     className="btn-action-base btn-excel-global" 
-                                     style={{ borderRadius: '12px', padding: '10px 24px', fontWeight: 700 }}
-                                     onClick={() => exportComparisonToExcel(results, region1, region2)}
-                                     disabled={results.length === 0}
-                                 >
-                                     <i className="fas fa-file-excel me-2"></i> Exporter Excel
-                                 </button>
-                                 <button 
-                                     className="btn-action-base btn-pdf-global" 
-                                     disabled={results.length === 0} 
-                                     style={{ borderRadius: '12px', padding: '10px 24px', fontWeight: 700 }}
-                                     onClick={() => generateComparisonReport(results, selectedProduct, region1, region2)}
-                                 >
-                                     <i className="fas fa-file-pdf me-2"></i> Exporter PDF
-                                 </button>
+                                 <div className="d-flex align-items-center gap-3">
+                                    <div className="table-row-count text-muted small fw-bold">
+                                        <i className="fas fa-list-ol me-1"></i> {results.length} lignes
+                                    </div>
+                                    {userRole !== 'VIEWER' && (
+                                        <button 
+                                         className="btn-action-base btn-excel-global" 
+                                         style={{ borderRadius: '12px', padding: '10px 24px', fontWeight: 700 }}
+                                         title="Exporter toutes les données vers Excel"
+                                         onClick={() => exportComparisonToExcel(results, region1, region2)}
+                                         disabled={results.length === 0}
+                                        >
+                                         <i className="fas fa-file-excel me-2"></i> Exporter Excel
+                                        </button>
+                                    )}
+                                </div>
+                                 {userRole !== 'VIEWER' && (
+                                     <button 
+                                         className="btn-action-base btn-pdf-global" 
+                                         disabled={results.length === 0} 
+                                         style={{ borderRadius: '12px', padding: '10px 24px', fontWeight: 700 }}
+                                         onClick={() => generateComparisonReport(results, selectedProduct, region1, region2, isBesoinSearch)}
+                                     >
+                                         <i className="fas fa-file-pdf me-2"></i> Exporter PDF
+                                     </button>
+                                 )}
                              </div>
                         </>
                     )}

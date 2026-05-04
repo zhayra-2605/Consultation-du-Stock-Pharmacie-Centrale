@@ -16,7 +16,7 @@ import { api } from '../services/api';
 import { getCodeBesoin, getCodeProduit, getLibelleBesoin, getLibelleProduit, getPresentation } from '../utils/dataUtils';
 import { generateMainReport, generateBesoinDashboard, generateProduitDashboard } from '../utils/pdfGenerator';
 
-const Dashboard = () => {
+const Dashboard = ({ setToken }) => {
     // Data state
     const [mainData, setMainData] = useState([]);
     const [details, setDetails] = useState([]);
@@ -175,11 +175,36 @@ const Dashboard = () => {
         }
     };
 
+    const handleLogout = () => {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('role');
+        setToken(null);
+    };
+
     return (
         <div className="app-container">
-            <header className="app-header">
-                <img src="/assets/logo_pct_official.png" alt="Pharmacie Centrale" className="app-header-logo" />
-                <h1 className="app-header-title"><span>Pharmacie</span> Centrale : Consultation du Stock</h1>
+            <header className="app-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <img src="/assets/logo_pct_official.png" alt="Pharmacie Centrale" className="app-header-logo" />
+                    <h1 className="app-header-title"><span>Pharmacie</span> Centrale : Consultation du Stock</h1>
+                </div>
+                <button 
+                    onClick={handleLogout}
+                    style={{
+                        padding: '8px 16px',
+                        background: 'transparent',
+                        border: '1px solid #e74c3c',
+                        color: '#e74c3c',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        transition: 'all 0.3s ease'
+                    }}
+                    onMouseOver={(e) => { e.target.style.background = '#e74c3c'; e.target.style.color = 'white'; }}
+                    onMouseOut={(e) => { e.target.style.background = 'transparent'; e.target.style.color = '#e74c3c'; }}
+                >
+                    🚪 Se déconnecter
+                </button>
             </header>
 
             <div className="dashboard-layout">

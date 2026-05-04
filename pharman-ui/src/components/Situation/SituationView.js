@@ -3,7 +3,7 @@ import MetricGauges from './MetricGauges';
 import InteractiveMap from './InteractiveMap';
 import CriticalNeedsList from './CriticalNeedsList';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+import { api } from '../../services/api';
 
 const HUB_NAMES = {
   'TUNIS':    'Tunis',
@@ -26,14 +26,17 @@ const usePredictions = (selectedHub, period) => {
     setLoading(true);
     setError(null);
     try {
-      const url = `${API_BASE}/situation/predictions?hubId=${selectedHub || ''}&period=${period}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setMlData(data);
+      const res = await api.getSituationPredictions(selectedHub || '', period);
+      setMlData(res.data);
     } catch (e) {
       console.error('[SituationView] Erreur fetch:', e);
-      setError('Impossible de charger les prédictions. Vérifiez que le serveur Node.js est actif.');
+      if (e.response && e.response.status === 403) {
+          setError('Accès refusé : Ce tableau de bord est réservé aux Administrateurs.');
+      } else if (e.response && e.response.data && e.response.data.message) {
+          setError(`Erreur API: ${e.response.data.message}`);
+      } else {
+          setError(`Erreur de chargement: ${e.message}. Vérifiez que le serveur Node.js est actif.`);
+      }
     } finally {
       setLoading(false);
     }

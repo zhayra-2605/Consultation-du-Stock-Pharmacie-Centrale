@@ -43,9 +43,10 @@ const CoverageCells = ({ mmValue, stock, color }) => (
 
 /* ─── component ─────────────────────────────────────────────────────────── */
 const AutresModal = ({ isOpen, onClose, product, relatedProducts }) => {
+    const userRole = sessionStorage.getItem('role');
     if (!isOpen) return null;
 
-    const products = relatedProducts && relatedProducts.length > 0 ? relatedProducts : [];
+    const products = relatedProducts?.length > 0 ? relatedProducts : [];
 
     return (
         <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1060 }}>
@@ -163,20 +164,27 @@ const AutresModal = ({ isOpen, onClose, product, relatedProducts }) => {
 
                     {/* ── Actions ── */}
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '12px' }}>
-                        <button 
-                            className="btn-action-base btn-excel-global" 
-                            style={{ padding: '10px 24px', borderRadius: '12px', fontWeight: 700 }}
-                            onClick={() => exportCoverageToExcel(products, getLibelleBesoin(product) || getLibelleProduit(product))}
-                        >
-                            <i className="fas fa-file-excel me-2"></i> Exporter Excel
-                        </button>
-                        <button 
-                            className="btn-action-base btn-pdf-global" 
-                            style={{ padding: '10px 24px', borderRadius: '12px', fontWeight: 700 }}
-                            onClick={() => generateStockCoverageReport(products, product)}
-                        >
-                            <i className="fas fa-file-pdf me-2"></i> Exporter PDF
-                        </button>
+                        <div className="d-flex gap-2">
+                            {userRole !== 'VIEWER' && (
+                                <button 
+                                    className="btn-action-base btn-excel-global" 
+                                    style={{ padding: '10px 24px', borderRadius: '12px', fontWeight: 700 }}
+                                    title="Exporter la couverture vers Excel"
+                                    onClick={() => exportCoverageToExcel(products, getLibelleBesoin(product) || getLibelleProduit(product))}
+                                >
+                                    <i className="fas fa-file-excel me-2"></i> Exporter Excel
+                                </button>
+                            )}
+                        </div>
+                        {userRole !== 'VIEWER' && (
+                            <button 
+                                className="btn-action-base btn-pdf-global" 
+                                style={{ padding: '10px 24px', borderRadius: '12px', fontWeight: 700 }}
+                                onClick={() => generateStockCoverageReport(products, product)}
+                            >
+                                <i className="fas fa-file-pdf me-2"></i> Exporter PDF
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

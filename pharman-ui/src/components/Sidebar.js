@@ -8,6 +8,7 @@ import { REGIONS } from '../constants/regions';
  * - Rouge: stock = 0 ou absent
  */
 const Sidebar = ({ stockSummary, selectedProduct, onDepotClick, onFicheProduitClick, onCalendrierClick, onAutresClick, onImprimerClick }) => {
+    const userRole = sessionStorage.getItem('role');
     const hasSelection = !!selectedProduct;
 
     const getDepotStock = (depot) => {
@@ -64,7 +65,9 @@ const Sidebar = ({ stockSummary, selectedProduct, onDepotClick, onFicheProduitCl
                 <FooterBtn onClick={onFicheProduitClick} icon="📄" label="Fiche Produit" />
                 <FooterBtn onClick={onCalendrierClick}   icon="📅" label="Calendrier" />
                 <FooterBtn onClick={onAutresClick}       icon="⚙️" label="Autres" />
-                <FooterBtn onClick={onImprimerClick}     icon="🖨️" label="Imprimer" />
+                {userRole !== 'VIEWER' && (
+                    <FooterBtn onClick={onImprimerClick}     icon="🖨️" label="Imprimer" />
+                )}
             </div>
         </div>
     );

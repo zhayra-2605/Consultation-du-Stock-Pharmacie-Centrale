@@ -11,6 +11,7 @@ app.use(cors()); // Allow all origins as per requirements
 app.use(express.json());
 
 // Routes
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api', apiRoutes);
 
 // Root route

@@ -21,10 +21,15 @@ const predCache = new NodeCache({ stdTTL: 86400, checkperiod: 3600 });
 // Initialize regions on startup
 initializeRegions();
 
+// --- Middlewares ---
+const authMiddleware = require('../middleware/authMiddleware');
+const authorizeRoles = require('../middleware/roleMiddleware');
+const readOnlyMiddleware = require('../middleware/readOnlyMiddleware');
+
 // --- API Routes ---
 
 // 1. RECHERCHE PRODUIT
-router.get('/search', async (req, res) => {
+router.get('/search', authMiddleware, authorizeRoles('ADMIN', 'UBD', 'VIEWER'), readOnlyMiddleware, async (req, res) => {
     const { critere, valeur } = req.query;
     const val = (valeur || '').trim();
 
@@ -97,7 +102,7 @@ router.get('/search', async (req, res) => {
 });
 
 // 2. FICHE PRODUIT
-router.get('/produit/:code', async (req, res) => {
+router.get('/produit/:code', authMiddleware, authorizeRoles('ADMIN', 'UBD', 'VIEWER'), readOnlyMiddleware, async (req, res) => {
     const { code } = req.params;
     try {
         const [rows] = await pool.execute(`
@@ -126,7 +131,7 @@ router.get('/produit/:code', async (req, res) => {
 });
 
 // 3. PRODUITS LIÉS AU MÊME BESOIN
-router.get('/produits-par-besoin/:codeBesoin', async (req, res) => {
+router.get('/produits-par-besoin/:codeBesoin', authMiddleware, authorizeRoles('ADMIN', 'UBD', 'VIEWER'), readOnlyMiddleware, async (req, res) => {
     const { codeBesoin } = req.params;
     const latestStockSubquery = `(SELECT STOCK_TOTAL FROM fact_mouvements WHERE CODE_PRODUIT = dp.CODE_PRODUIT ORDER BY ANNEE DESC, MOIS DESC LIMIT 1)`;
 
@@ -182,7 +187,7 @@ router.get('/produits-par-besoin/:codeBesoin', async (req, res) => {
 });
 
 // 4. RÉSUMÉ STOCK PAR PRODUIT
-router.get('/stock-summary/:codeProduit', async (req, res) => {
+router.get('/stock-summary/:codeProduit', authMiddleware, authorizeRoles('ADMIN', 'UBD', 'VIEWER'), readOnlyMiddleware, async (req, res) => {
     const { codeProduit } = req.params;
     try {
         const [rows] = await pool.execute(
@@ -247,7 +252,7 @@ const buildStockDetailsSql = (whereField, filterByDepot, regionName) => {
 };
 
 // 5. DÉTAILS STOCK PAR PRODUIT
-router.get('/stock-details/:codeProduit/:depot', async (req, res) => {
+router.get('/stock-details/:codeProduit/:depot', authMiddleware, authorizeRoles('ADMIN', 'UBD', 'VIEWER'), readOnlyMiddleware, async (req, res) => {
     const { codeProduit, depot } = req.params;
     const targetDepots = depotNameGroups[depot];
     const sql = buildStockDetailsSql('sd.CODE_PRODUIT', depot !== 'National' ? targetDepots : null, depot);
@@ -262,7 +267,7 @@ router.get('/stock-details/:codeProduit/:depot', async (req, res) => {
 });
 
 // 5b. DÉTAILS STOCK PAR BESOIN
-router.get('/stock-details-besoin/:codeBesoin/:depot', async (req, res) => {
+router.get('/stock-details-besoin/:codeBesoin/:depot', authMiddleware, authorizeRoles('ADMIN', 'UBD', 'VIEWER'), readOnlyMiddleware, async (req, res) => {
     const { codeBesoin, depot } = req.params;
     const targetDepots = depotNameGroups[depot];
     let sql = buildStockDetailsSql('dp.CODE_BESOIN', depot !== 'National' ? targetDepots : null, depot);
@@ -278,7 +283,7 @@ router.get('/stock-details-besoin/:codeBesoin/:depot', async (req, res) => {
 });
 
 // 6. RÉSUMÉ STOCK PAR BESOIN
-router.get('/stock-summary-besoin/:codeBesoin', async (req, res) => {
+router.get('/stock-summary-besoin/:codeBesoin', authMiddleware, authorizeRoles('ADMIN', 'UBD', 'VIEWER'), readOnlyMiddleware, async (req, res) => {
     const { codeBesoin } = req.params;
     try {
         const [rows] = await pool.execute(`
@@ -302,7 +307,7 @@ router.get('/stock-summary-besoin/:codeBesoin', async (req, res) => {
 });
 
 // 7. STATS PAR PRODUIT
-router.get('/stats/:codeProduit', async (req, res) => {
+router.get('/stats/:codeProduit', authMiddleware, authorizeRoles('ADMIN', 'UBD', 'VIEWER'), readOnlyMiddleware, async (req, res) => {
     const { codeProduit } = req.params;
     try {
         const [years] = await pool.query(`
@@ -348,7 +353,7 @@ router.get('/stats/:codeProduit', async (req, res) => {
 });
 
 // 8. STATS PAR BESOIN
-router.get('/stats-besoin/:codeBesoin', async (req, res) => {
+router.get('/stats-besoin/:codeBesoin', authMiddleware, authorizeRoles('ADMIN', 'UBD', 'VIEWER'), readOnlyMiddleware, async (req, res) => {
     const { codeBesoin } = req.params;
     try {
         const [[years], [months], [rawRegions]] = await Promise.all([
@@ -405,7 +410,7 @@ router.get('/stats-besoin/:codeBesoin', async (req, res) => {
 });
 
 // 8.5. LIVRAISONS PAR BESOIN
-router.get('/livraisons-besoin/:codeBesoin', async (req, res) => {
+router.get('/livraisons-besoin/:codeBesoin', authMiddleware, authorizeRoles('ADMIN', 'UBD', 'VIEWER'), readOnlyMiddleware, async (req, res) => {
     const { codeBesoin } = req.params;
     try {
         const [livraisons] = await pool.execute(`
@@ -428,7 +433,7 @@ router.get('/livraisons-besoin/:codeBesoin', async (req, res) => {
 });
 
 // 9. COMPARAISON DE RÉGIONS
-router.get('/compare-regions', async (req, res) => {
+router.get('/compare-regions', authMiddleware, authorizeRoles('ADMIN'), async (req, res) => {
     const { code, isBesoin, regionA, regionB, months } = req.query;
     const numMonths = parseInt(months) || 12;
     const isBesoinSearch = isBesoin === 'true';
@@ -472,7 +477,7 @@ router.get('/compare-regions', async (req, res) => {
 });
 
 // 10. COMPARAISON AVANCÉE
-router.get('/compare-regions-advanced', async (req, res) => {
+router.get('/compare-regions-advanced', authMiddleware, authorizeRoles('ADMIN'), async (req, res) => {
     const { code, isBesoin, region1, op1, val1, region2, op2, val2, historyMonths } = req.query;
     const isBesoinSearch = isBesoin === 'true';
     const months = parseInt(historyMonths) || 6;
@@ -541,7 +546,7 @@ const {
     getGlobalStatus 
 } = require('../utils/predictionUtils');
 
-router.get('/situation/predictions', async (req, res) => {
+router.get('/situation/predictions', authMiddleware, authorizeRoles('ADMIN'), async (req, res) => {
     const { hubId, period = '3' } = req.query;
     const p   = parseInt(period, 10);
     const hub = (hubId || '').toUpperCase().trim();
