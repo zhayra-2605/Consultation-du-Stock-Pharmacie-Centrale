@@ -24,8 +24,9 @@ const CalendrierModal = ({ isOpen, onClose, relatedProducts }) => {
 
     const products = relatedProducts && relatedProducts.length > 0 ? relatedProducts : [];
 
-    const currentYear = 2024;
-    const currentMonth = 4;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 1-indexed
     
     const echues = livraisons.filter(l => l.ANNEE < currentYear || (l.ANNEE === currentYear && l.MOIS <= currentMonth));
     const nonEchues = livraisons.filter(l => l.ANNEE > currentYear || (l.ANNEE === currentYear && l.MOIS > currentMonth));

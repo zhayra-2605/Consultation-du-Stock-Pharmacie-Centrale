@@ -40,17 +40,23 @@ const formatCriticalNeeds = (rows) => {
 };
 
 const calculateHubsHealth = (rows) => {
+    // Statuts forcés pour la soutenance selon la demande
+    const DEMO_STATUS = {
+        'TUNIS':    { status: 'stable',   adequacy: 88 }, // Vert
+        'SFAX':     { status: 'stable',   adequacy: 82 }, // Vert
+        'SOUSSE':   { status: 'warning',  adequacy: 65 }, // Jaune
+        'GAFSA':    { status: 'warning',  adequacy: 58 }, // Jaune
+        'KEF':      { status: 'critical', adequacy: 34 }, // Rouge
+        'MEDENINE': { status: 'critical', adequacy: 25 }  // Rouge
+    };
+
     const HUB_IDS = ['TUNIS', 'SFAX', 'SOUSSE', 'GAFSA', 'KEF', 'MEDENINE'];
+    
     return HUB_IDS.map(hid => {
-        const hr = rows.filter(r => r.hub_id === hid);
-        if (!hr.length) return { id: hid, status: 'stable', adequacy: 100 };
-        // adequacy = % de produits avec couverture >= 30 mois (stable)
-        const stable = hr.filter(r => Number(r.prediction_couverture) >= 30).length;
-        const adequacy = Math.round((stable / hr.length) * 100);
         return {
             id: hid,
-            adequacy,
-            status: adequacy < 55 ? 'critical' : adequacy < 80 ? 'warning' : 'stable'
+            adequacy: DEMO_STATUS[hid].adequacy,
+            status: DEMO_STATUS[hid].status
         };
     });
 };

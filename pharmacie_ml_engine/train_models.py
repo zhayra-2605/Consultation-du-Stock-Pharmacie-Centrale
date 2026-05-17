@@ -14,7 +14,7 @@ import numpy as np
 import joblib  # type: ignore
 import xgboost as xgb
 from sklearn.metrics import (
-    r2_score, mean_absolute_error,
+    r2_score, mean_absolute_error, mean_squared_error,
     recall_score, precision_score, roc_auc_score,
     precision_recall_curve
 )
@@ -93,8 +93,8 @@ def train_xgboost_rupture(df: pd.DataFrame) -> xgb.XGBClassifier:
     logger.info(f"[train]   Desequilibre: {count_0} OK / {count_1} Ruptures (SPW={spw:.2f})")
 
     model = xgb.XGBClassifier(
-        n_estimators=300,
-        max_depth=5,
+        n_estimators=500,
+        max_depth=8,
         learning_rate=0.05,
         scale_pos_weight=spw,
         objective='binary:logistic',
@@ -137,16 +137,18 @@ def train_xgboost_stock(df: pd.DataFrame) -> xgb.XGBRegressor:
     X_tr, X_te, y_tr, y_te = time_series_split(X, y)
 
     model = xgb.XGBRegressor(
-        n_estimators=300,
-        max_depth=5,
+        n_estimators=500,
+        max_depth=8,
         learning_rate=0.05,
         random_state=RANDOM_STATE
     )
     model.fit(X_tr, y_tr)
 
     y_pred = model.predict(X_te).clip(0, None)
+    rmse = np.sqrt(mean_squared_error(y_te, y_pred))
     logger.info(f"[train]   R2  : {r2_score(y_te, y_pred):.4f}")
     logger.info(f"[train]   MAE : {mean_absolute_error(y_te, y_pred):.2f} unités")
+    logger.info(f"[train]   RMSE: {rmse:.2f} unités")
 
     path = os.path.join(MODEL_DIR, "model_stock.pkl")
     joblib.dump(model, path)

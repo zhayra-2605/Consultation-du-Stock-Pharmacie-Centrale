@@ -1,16 +1,9 @@
 import React from 'react';
-
-const getDatePeremption = (item) => {
-  const date = item.DATEPEREMP ?? item.DATE_PEREMPTION ?? item.date_peremption ?? '';
-  if (!date || date === '0000-00-00' || String(date).startsWith('0000-00-00')) {
-    return '-';
-  }
-  return date;
-};
+import { getDatePeremption } from '../utils/dataUtils';
 
 const StockDetailModal = ({ isOpen, onClose, data, depotName, productInfo }) => {
   if (!isOpen) return null;
-  const seenProducts = new Set();
+
 
   return (
     <div className="modal-overlay" onClick={onClose}>

@@ -1,21 +1,26 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-const { pool } = require('../utils/db');
+/**
+ * controllers/authController.js
+ * Contrôleur pour la gestion de l'authentification.
+ * Responsabilité : Gérer la connexion des utilisateurs, l'envoi de codes de récupération et le changement de mot de passe.
+ */
 
-// Rôle mapping si besoin (peut être stocké en dur ou en DB)
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_12345';
-const JWT_EXPIRES_IN = '24h';
+const bcrypt = require('bcrypt'); // Bibliothèque pour le hachage sécurisé des mots de passe
+const nodemailer = require('nodemailer'); // Bibliothèque pour l'envoi d'e-mails
+const { pool } = require('../utils/db'); // Import de la connexion DB
 
+/**
+ * Gère la connexion de l'utilisateur (Login).
+ */
 const login = async (req, res) => {
     const { matricule, password, email } = req.body;
 
+    // Vérification des champs requis
     if (!matricule || !password || !email) {
         return res.status(400).json({ message: 'Veuillez fournir un matricule, un e-mail et un mot de passe' });
     }
 
     try {
-        // Vérifier si l'utilisateur existe
+        // 1. On cherche l'utilisateur dans la base par son matricule
         const [rows] = await pool.execute('SELECT * FROM users WHERE matricule = ?', [matricule]);
 
         if (rows.length === 0) {
@@ -24,29 +29,24 @@ const login = async (req, res) => {
 
         const user = rows[0];
 
-        // Vérifier l'e-mail
+        // 2. Vérification de l'e-mail (double sécurité)
         if (user.email !== email) {
             return res.status(401).json({ message: 'Matricule, e-mail ou mot de passe incorrect' });
         }
 
-        // Vérifier le mot de passe
+        // 3. Comparaison du mot de passe saisi avec le hash stocké en base
         const isMatch = await bcrypt.compare(password, user.password_hash);
 
         if (!isMatch) {
             return res.status(401).json({ message: 'Matricule, e-mail ou mot de passe incorrect' });
         }
 
-        // Générer le token JWT
-        const token = jwt.sign(
-            { id: user.id, matricule: user.matricule, role: user.role },
-            JWT_SECRET,
-            { expiresIn: JWT_EXPIRES_IN }
-        );
+        // 4. On utilise le matricule comme jeton de session (Token simplifié)
+        const token = user.matricule;
 
-        // Réponse avec le token et les infos utilisateur
+        // 5. Réponse au client avec les informations nécessaires
         res.json({
             token,
-            matricule: user.matricule,
             role: user.role,
             message: 'Authentification réussie'
         });
@@ -57,6 +57,7 @@ const login = async (req, res) => {
     }
 };
 
+// Configuration du transporteur d'e-mails (Gmail dans cet exemple)
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -65,12 +66,16 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+/**
+ * Gère la demande de mot de passe oublié (Envoi de code par e-mail).
+ */
 const forgotPassword = async (req, res) => {
     const { matricule, email } = req.body;
 
     if (!matricule || !email) return res.status(400).json({ message: 'Veuillez fournir votre matricule et votre e-mail.' });
 
     try {
+        // Vérifier si l'utilisateur existe avec ce matricule et cet email
         const [rows] = await pool.execute('SELECT * FROM users WHERE matricule = ? AND email = ?', [matricule, email]);
         if (rows.length === 0) {
             return res.status(404).json({ message: 'Matricule ou e-mail introuvable ou incorrect.' });
@@ -78,13 +83,15 @@ const forgotPassword = async (req, res) => {
 
         const user = rows[0];
 
-        // Generate a 6-digit code
+        // Génération d'un code aléatoire à 6 chiffres
         const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-        // Expires in 15 minutes
+        // Le code expire dans 15 minutes
         const expires = new Date(Date.now() + 15 * 60 * 1000);
 
+        // Enregistrer le code et son expiration en base de données
         await pool.execute('UPDATE users SET reset_code = ?, reset_expires = ? WHERE id = ?', [resetCode, expires, user.id]);
 
+        // Préparation du contenu de l'e-mail
         const mailOptions = {
             from: process.env.EMAIL_USER || 'Pharmacie Centrale',
             to: user.email,
@@ -102,12 +109,12 @@ const forgotPassword = async (req, res) => {
             `
         };
 
+        // Envoi de l'e-mail
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
+                // Log de sécurité si l'envoi échoue (pratique en développement)
                 console.log('\n======================================================');
                 console.log('⚠️ ERREUR D\'ENVOI E-MAIL');
-                console.log(`L'email n'a pas pu être envoyé. Avez-vous configuré le fichier .env ?`);
-                console.log('Erreur technique :', error.message);
                 console.log(`Par sécurité, voici le code pour ${user.matricule} : ${resetCode}`);
                 console.log('======================================================\n');
             } else {
@@ -115,9 +122,7 @@ const forgotPassword = async (req, res) => {
             }
         });
 
-        // We return success even if email transport fails (for dev/test purposes)
-        // In a real app, you might want to return an error if sending fails.
-        // For development, we return the masked email.
+        // Masquer l'e-mail pour la réponse de sécurité
         const maskedEmail = user.email.replace(/(.{2})(.*)(?=@)/, (_, p1, p2) => p1 + p2.replace(/./g, '*'));
         res.json({ message: `Un code a été envoyé à l'adresse e-mail : ${maskedEmail}` });
 
@@ -127,6 +132,9 @@ const forgotPassword = async (req, res) => {
     }
 };
 
+/**
+ * Gère la réinitialisation effective du mot de passe avec le code reçu.
+ */
 const resetPassword = async (req, res) => {
     const { matricule, code, newPassword } = req.body;
 
@@ -135,6 +143,7 @@ const resetPassword = async (req, res) => {
     }
 
     try {
+        // Vérifier si le matricule et le code correspondent
         const [rows] = await pool.execute('SELECT * FROM users WHERE matricule = ? AND reset_code = ?', [matricule, code]);
 
         if (rows.length === 0) {
@@ -143,16 +152,16 @@ const resetPassword = async (req, res) => {
 
         const user = rows[0];
 
-        // Check expiration
+        // Vérifier si le code a expiré
         if (new Date() > new Date(user.reset_expires)) {
             return res.status(400).json({ message: 'Le code de vérification a expiré. Veuillez refaire une demande.' });
         }
 
-        // Hash new password
+        // Hacher le nouveau mot de passe pour la sécurité
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        // Update password and clear code
+        // Mettre à jour le mot de passe et effacer le code de réinitialisation
         await pool.execute('UPDATE users SET password_hash = ?, reset_code = NULL, reset_expires = NULL WHERE id = ?', [hashedPassword, user.id]);
 
         res.json({ message: 'Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.' });
@@ -167,3 +176,4 @@ module.exports = {
     forgotPassword,
     resetPassword
 };
+

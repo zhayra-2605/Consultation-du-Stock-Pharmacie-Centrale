@@ -3,6 +3,25 @@ import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap'
 import { authApi } from '../services/api';
 import './Login.css';
 
+const CustomInput = ({ label, icon, type, placeholder, value, onChange, required, maxLength, minLength, className }) => (
+  <Form.Group className={`mb-3 form-icon-group ${className || ''}`}>
+    <Form.Label>{label}</Form.Label>
+    <div className="input-with-icon">
+      <i className={`fas ${icon} input-icon`}></i>
+      <Form.Control 
+        type={type} 
+        placeholder={placeholder} 
+        value={value}
+        onChange={onChange}
+        required={required}
+        maxLength={maxLength}
+        minLength={minLength}
+        className="ps-5"
+      />
+    </div>
+  </Form.Group>
+);
+
 const Login = ({ setToken }) => {
   const [matricule, setMatricule] = useState('');
   const [email, setEmail] = useState('');
@@ -13,25 +32,6 @@ const Login = ({ setToken }) => {
   const [mode, setMode] = useState('login'); // 'login', 'forgot', 'reset'
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
-
-  const CustomInput = ({ label, icon, type, placeholder, value, onChange, required, maxLength, minLength, className }) => (
-    <Form.Group className={`mb-3 form-icon-group ${className || ''}`}>
-      <Form.Label>{label}</Form.Label>
-      <div className="input-with-icon">
-        <i className={`fas ${icon} input-icon`}></i>
-        <Form.Control 
-          type={type} 
-          placeholder={placeholder} 
-          value={value}
-          onChange={onChange}
-          required={required}
-          maxLength={maxLength}
-          minLength={minLength}
-          className="ps-5"
-        />
-      </div>
-    </Form.Group>
-  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -114,12 +114,7 @@ const Login = ({ setToken }) => {
       </div>
 
         <div className="left-panel-content">
-          <div className="top-badges-container">
-            <div className="system-status-badge">
-              <div className="status-dot"></div>
-              <span>Système Sécurisé & Connecté</span>
-            </div>
-          </div>
+
 
           <a href="http://www.phct.com.tn/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
             <div className="banner-content">
@@ -136,33 +131,60 @@ const Login = ({ setToken }) => {
 
           <div className="welcome-text-block">
             <h4>Portail National d'Analyse et de Prédiction</h4>
-            <p>Une infrastructure technologique avancée permettant de monitorer en temps réel l'état des stocks, d'anticiper les ruptures et de garantir la sécurité sanitaire du pays grâce à l'Intelligence Artificielle.</p>
+            <p>Une infrastructure technologique avancée permettant de monitorer en temps réel l'état des stocks, d'anticiper les ruptures et de garantir la sécurité sanitaire du pays grâce à la Prédiction.</p>
           </div>
 
-          <div className="feature-grid">
-            <div className="feature-card">
-              <i className="fas fa-chart-line" style={{ color: '#0d8262' }}></i>
-              <span>Algorithmes Prédictifs</span>
+          <div className="interactive-feature-showcase">
+            {/* Center Node */}
+            <div className="center-node">
+              <div className="center-node-icon">
+                <i className="fas fa-hospital-alt"></i>
+              </div>
+              <span className="center-node-label">Pharmacie Centrale</span>
             </div>
-            <div className="feature-card">
-              <i className="fas fa-shield-alt" style={{ color: '#3b82f6' }}></i>
-              <span>Accès Sécurisé RBAC</span>
+            
+            {/* Floating Nodes */}
+            <div className="floating-node top-left pink-theme">
+              <div className="node-icon">
+                <i className="fas fa-pills"></i>
+              </div>
+              <span className="node-label">Médicaments</span>
             </div>
-            <div className="feature-card">
-              <i className="fas fa-box" style={{ color: '#f59e0b' }}></i>
-              <span>Gestion des Stocks IA</span>
+
+            <div className="floating-node middle-left pink-theme">
+              <div className="node-icon">
+                <i className="fas fa-heart"></i>
+              </div>
+              <span className="node-label">Santé</span>
             </div>
-            <div className="feature-card">
-              <i className="fas fa-project-diagram" style={{ color: '#8b5cf6' }}></i>
-              <span>Réseau National</span>
+
+            <div className="floating-node bottom-right amber-theme">
+              <div className="node-icon">
+                <i className="fas fa-truck"></i>
+              </div>
+              <span className="node-label">Logistique</span>
             </div>
-            <div className="feature-card">
-              <i className="fas fa-pills" style={{ color: '#ec4899' }}></i>
-              <span>Traçabilité Produits</span>
+
+            {/* Additional nodes for balance, matching the previous features */}
+            <div className="floating-node top-right blue-theme">
+              <div className="node-icon">
+                <i className="fas fa-chart-line"></i>
+              </div>
+              <span className="node-label">Prédiction</span>
             </div>
-            <div className="feature-card">
-              <i className="fas fa-bell" style={{ color: '#ef4444' }}></i>
-              <span>Alertes de Rupture</span>
+
+            <div className="floating-node middle-right purple-theme">
+              <div className="node-icon">
+                <i className="fas fa-project-diagram"></i>
+              </div>
+              <span className="node-label">Réseau National</span>
+            </div>
+
+            <div className="floating-node bottom-left orange-theme">
+              <div className="node-icon">
+                <i className="fas fa-microscope"></i>
+              </div>
+              <span className="node-label">Traçabilité</span>
             </div>
           </div>
 

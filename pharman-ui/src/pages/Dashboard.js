@@ -190,20 +190,33 @@ const Dashboard = ({ setToken }) => {
                 </div>
                 <button 
                     onClick={handleLogout}
+                    className="logout-button"
                     style={{
-                        padding: '8px 16px',
-                        background: 'transparent',
-                        border: '1px solid #e74c3c',
-                        color: '#e74c3c',
-                        borderRadius: '20px',
+                        padding: '8px 20px',
+                        background: 'rgba(13, 130, 98, 0.1)',
+                        border: '1.5px solid #0d8262',
+                        color: '#0d8262',
+                        borderRadius: '50px',
                         cursor: 'pointer',
-                        fontWeight: 'bold',
-                        transition: 'all 0.3s ease'
+                        fontWeight: '700',
+                        fontSize: '0.9rem',
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
                     }}
-                    onMouseOver={(e) => { e.target.style.background = '#e74c3c'; e.target.style.color = 'white'; }}
-                    onMouseOut={(e) => { e.target.style.background = 'transparent'; e.target.style.color = '#e74c3c'; }}
+                    onMouseOver={(e) => { 
+                        e.currentTarget.style.background = '#0d8262'; 
+                        e.currentTarget.style.color = 'white';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(13, 130, 98, 0.3)';
+                    }}
+                    onMouseOut={(e) => { 
+                        e.currentTarget.style.background = 'rgba(13, 130, 98, 0.1)'; 
+                        e.currentTarget.style.color = '#0d8262';
+                        e.currentTarget.style.boxShadow = 'none';
+                    }}
                 >
-                    🚪 Se déconnecter
+                    <i className="fas fa-sign-out-alt"></i> Se déconnecter
                 </button>
             </header>
 

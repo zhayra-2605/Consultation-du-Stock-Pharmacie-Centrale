@@ -27,3 +27,15 @@ export const getPresentation = (row) => {
     if (!row) return null;
     return row.PRESENTATION_T ?? row.PRESENTATION ?? row.presentation ?? row.PRESENTATIONNB;
 };
+
+/**
+ * Extracts and normalizes the expiry date from various API field names.
+ * Returns '-' for missing or invalid (0000-00-00) dates.
+ */
+export const getDatePeremption = (item) => {
+    const date = item?.DATEPEREMP ?? item?.DATE_PEREMPTION ?? item?.date_peremption ?? '';
+    if (!date || date === '0000-00-00' || String(date).startsWith('0000-00-00')) {
+        return '-';
+    }
+    return date;
+};

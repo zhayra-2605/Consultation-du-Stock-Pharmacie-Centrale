@@ -49,3 +49,5 @@ logs
 # Temp
 temp/
 tmp/
+*.whl
+

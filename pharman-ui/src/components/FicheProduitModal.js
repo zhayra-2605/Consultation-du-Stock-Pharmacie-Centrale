@@ -64,17 +64,16 @@ const FicheProduitModal = ({ isOpen, onClose, product, detailedProductInfo }) =>
                 const year = String(d.getFullYear()).slice(-2);
                 return `${day}-${month}-${year}`;
             }
-        } catch (e) { }
+        } catch { /* Invalid date string — fallback to raw value below */ }
         return String(dateString); // fallback
     };
 
-    const prodCode = localProduct?.CODE_PRODUIT || localProduct?.CODE_PRODUIT_MAIN || localProduct?.CODE_PRODUIT || localProduct?.code_produit || localProduct?.CODEPRODUIT || '-';
+    const prodCode = localProduct?.CODE_PRODUIT || localProduct?.CODE_PRODUIT_MAIN || localProduct?.code_produit || localProduct?.CODEPRODUIT || '-';
     const prodLibelle = localProduct?.LIBELLE_PRODUIT || localProduct?.libelle_produit || localProduct?.LIBELLE || '-';
     const description = localDetails?.DESCRIPTION || '-';
     
-    // We treat 'MEDICAMENT' as a true/false field if missing we try to guess or return '-'
-    // Note: Assuming MEDICAMENT might not be explicitly fetched if it's not in details table, default to Oui or based on field if it exists
-    const medicament = localDetails?.MEDICAMENT ? 'Oui' : 'Oui'; // Usually true in pharmacy, mocking based on screenshot if missing
+    // MEDICAMENT field: display 'Oui'/'Non' based on actual data, fallback to '-' if unknown
+    const medicament = localDetails?.MEDICAMENT != null ? (localDetails.MEDICAMENT ? 'Oui' : 'Non') : '-';
     
     const presentation = localProduct?.PRESENTATION_T || localProduct?.PRESENTATION || localDetails?.PRESENTATION || '-';
     const typeProduit = localDetails?.TYPEPROD || '-';
@@ -86,11 +85,11 @@ const FicheProduitModal = ({ isOpen, onClose, product, detailedProductInfo }) =>
     const psycho = localDetails?.PSYCHO === 1 || localDetails?.PSYCHO === '1' ? 'Oui' : 'Non';
     
     const codeBesoin = localProduct?.CODE_BESOIN || localProduct?.code_besoin || localProduct?.CODEBESOIN || localDetails?.CODEBESOIN || '-';
-    const sigle = localDetails?.SIGLE || localProduct?.SIGLE || 'VT'; // mocked fallback
+    const sigle = localDetails?.SIGLE || localProduct?.SIGLE || '-';
     
-    const paysOrigine = localDetails?.PAYS_ORIGINE || localDetails?.PAYSORIGINE || 'France';
-    const paysProvenance = localDetails?.PAYS_PROVENANCE || localDetails?.PAYSPROVENANCE || 'France';
-    const actif = localProduct?.ACTIF || localDetails?.ACTIF || 'Actif';
+    const paysOrigine = localDetails?.PAYS_ORIGINE || localDetails?.PAYSORIGINE || '-';
+    const paysProvenance = localDetails?.PAYS_PROVENANCE || localDetails?.PAYSPROVENANCE || '-';
+    const actif = localProduct?.ACTIF || localDetails?.ACTIF || '-';
 
     const renderRow = (label, value) => (
         <tr>
